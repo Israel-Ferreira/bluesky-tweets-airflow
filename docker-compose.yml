@@ -96,6 +96,28 @@ services:
       start_period: 5s
     restart: always
 
+  mongo:
+    image: mongo:latest
+    restart: always
+    
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
+
+    volumes:
+      - mongo-db-volume:/data/db
+
+
+  mongo-express:
+    image: mongo-express
+    restart: always
+    ports:
+      - 9081:8081
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: root
+      ME_CONFIG_MONGODB_ADMINPASSWORD: example
+      ME_CONFIG_MONGODB_URL: mongodb://root:example@mongo:27017/
+      ME_CONFIG_BASICAUTH: false
 
 
 
@@ -132,7 +154,6 @@ services:
         condition: service_completed_successfully
 
 
-    
 
 
   airflow-init:
@@ -214,5 +235,8 @@ services:
 
 
 
+
+
 volumes:
+  mongo-db-volume:
   postgres-db-volume:

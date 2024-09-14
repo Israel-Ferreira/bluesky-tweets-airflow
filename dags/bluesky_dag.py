@@ -6,6 +6,8 @@ from airflow.operators.empty import EmptyOperator
 from airflow.operators.python import PythonOperator
 from airflow.providers.http.operators.http import SimpleHttpOperator
 
+from airflow.providers.mongo.hooks.mongo import MongoHook
+
 
 import pendulum
 
@@ -30,6 +32,15 @@ def extract_tweet_data_and_save_in_mongo(**kwargs):
         "createdAt": task_data["record"]["createdAt"],
         "lang": task_data["record"]["langs"]
     }
+
+
+    mongo_hook = MongoHook(mongo_conn_id="mongo_conn")
+    client = mongo_hook.get_conn()
+    db =  client.tweets
+
+    collection = db.get_collection("tweets_collection")
+
+    collection.insert_one(tweet_data)
 
 
     print(tweet_data)
@@ -90,6 +101,7 @@ with DAG(dag_id="bluesky_dag", schedule="*/10 * * * *", start_date=start_date) a
         headers={"Content-Type": "application/json", "Authorization": "Bearer {{ task_instance.xcom_pull(task_ids='auth_bsky_task')['accessJwt'] }}"},
         endpoint=f'/app.bsky.feed.searchPosts?q={quote('#TesteAirflow')}&limit=2&sort=latest'
     )
+
 
 
     extract_tweet_data_task =  PythonOperator(
